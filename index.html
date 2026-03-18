@@ -931,9 +931,11 @@
             // Fall death - instant death without shield
             if (player.y > canvas.height + 50) {
                 if (hasShield) {
-                    // Shield: bounce back up instead of dying, keep the shield
+                    // Shield: bounce back up instead of dying, CONSUME the shield (one-time use)
                     player.y = canvas.height - 100;
                     player.vy = -15;
+                    hasShield = false;
+                    updatePowerUpHUD();
                 } else {
                     // No shield = instant death (no lives system for player)
                     gameOver();
