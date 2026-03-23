@@ -373,6 +373,51 @@
             background: #4ECDC4;
             border-radius: 4px;
         }
+
+        /* Color Picker */
+        .color-picker-container {
+            margin: 20px 0 30px 0;
+            text-align: center;
+        }
+
+        .color-picker-label {
+            color: #A0A0A0;
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .color-option {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+
+        .color-option:hover {
+            transform: scale(1.15);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .color-option.selected {
+            border-color: white;
+            transform: scale(1.2);
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.4);
+        }
     </style>
 </head>
 <body>
@@ -401,6 +446,17 @@
         <div class="screen" id="menuScreen">
             <div class="title">Sky Hopper</div>
             <div class="subtitle">Jump to the sky!</div>
+            <div class="color-picker-container">
+                <div class="color-picker-label">Choose Your Color</div>
+                <div class="color-options" id="colorOptions">
+                    <div class="color-option" style="background:#FFE66D" data-color="#FFE66D" onclick="selectPlayerColor('#FFE66D')"></div>
+                    <div class="color-option" style="background:#FF6B6B" data-color="#FF6B6B" onclick="selectPlayerColor('#FF6B6B')"></div>
+                    <div class="color-option" style="background:#4ECDC4" data-color="#4ECDC4" onclick="selectPlayerColor('#4ECDC4')"></div>
+                    <div class="color-option" style="background:#9B59B6" data-color="#9B59B6" onclick="selectPlayerColor('#9B59B6')"></div>
+                    <div class="color-option" style="background:#3498DB" data-color="#3498DB" onclick="selectPlayerColor('#3498DB')"></div>
+                    <div class="color-option" style="background:#2ECC71" data-color="#2ECC71" onclick="selectPlayerColor('#2ECC71')"></div>
+                </div>
+            </div>
             <button class="btn btn-primary" onclick="startGame()">Play</button>
             <button class="btn btn-upgrade" onclick="showShop()">Upgrades</button>
             <div class="high-score-display">High Score: <span id="menuHighScore">0</span></div>
@@ -459,6 +515,19 @@
     </div>
 
     <script>
+        // Player Color
+        let playerColor = '#FFE66D'; // Default yellow
+
+        // Helper: lighten a hex color
+        function lightenColor(hex, percent) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
         // Game Configuration
         const CONFIG = {
             GRAVITY: 0.4,
@@ -506,6 +575,7 @@
             localStorage.setItem('skyHopper_upgrades', JSON.stringify(upgrades));
             localStorage.setItem('skyHopper_highScore', highScore.toString());
             localStorage.setItem('skyHopper_coins', totalCoins.toString());
+            localStorage.setItem('skyHopper_playerColor', playerColor);
         }
         
         function saveSession() {
@@ -579,6 +649,24 @@
             }
             highScore = parseInt(localStorage.getItem('skyHopper_highScore')) || 0;
             totalCoins = parseInt(localStorage.getItem('skyHopper_coins')) || 0;
+            const savedColor = localStorage.getItem('skyHopper_playerColor');
+            if (savedColor) {
+                playerColor = savedColor;
+            }
+            updateColorPickerUI();
+        }
+
+        function selectPlayerColor(color) {
+            playerColor = color;
+            localStorage.setItem('skyHopper_playerColor', color);
+            updateColorPickerUI();
+            saveGame();
+        }
+
+        function updateColorPickerUI() {
+            document.querySelectorAll('.color-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.color === playerColor);
+            });
         }
 
         let upgrades = {
@@ -1141,9 +1229,9 @@
                 player.x + player.width/2, player.y + player.height/2, 0,
                 player.x + player.width/2, player.y + player.height/2, player.width
             );
-            playerGrad.addColorStop(0, '#FFE66D');
-            playerGrad.addColorStop(1, '#F39C12');
-            
+            playerGrad.addColorStop(0, lightenColor(playerColor, 30));
+            playerGrad.addColorStop(1, playerColor);
+
             ctx.fillStyle = playerGrad;
             ctx.beginPath();
             ctx.roundRect(player.x, player.y, player.width, player.height, 10);
